@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Desa Online Wiyugobak</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #6366f1 0%, #a5b4fc 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .sidebar-active {
+            background: #4f46e5;
+            color: white;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; }
+            .glass-morphism { border: none; box-shadow: none; background: white; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- LOGIN OVERLAY -->
+    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-indigo-900 bg-opacity-90">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-3xl">
+                    <i class="fas fa-landmark"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-indigo-900">Desa Wiyugobak</h1>
+                <p class="text-gray-500">Sistem Informasi Database Penduduk</p>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="username" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="admin" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition">Masuk Sistem</button>
+            </form>
+            <p class="mt-6 text-center text-xs text-gray-400 italic">Distrik Kobakma, Kabupaten Mamberamo Tengah, Papua Pegunungan</p>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="main-app" class="hidden flex flex-col md:flex-row min-h-screen">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-full md:w-64 glass-morphism shadow-xl no-print">
+            <div class="p-6">
+                <h2 class="text-xl font-bold text-indigo-800">WIYUGOBAK</h2>
+                <p class="text-[10px] text-indigo-500 uppercase tracking-widest font-bold">Sistem Desa Online</p>
+            </div>
+            <nav class="mt-4 px-4 space-y-2">
+                <button onclick="showSection('dashboard')" class="nav-btn w-full flex items-center p-3 rounded-xl transition hover:bg-indigo-50 group sidebar-active" id="btn-dashboard">
+                    <i class="fas fa-home mr-3 text-indigo-600"></i> Dashboard
+                </button>
+                <button onclick="showSection('penduduk')" class="nav-btn w-full flex items-center p-3 rounded-xl transition hover:bg-indigo-50" id="btn-penduduk">
+                    <i class="fas fa-users mr-3 text-indigo-600"></i> Data Penduduk
+                </button>
+                <button onclick="showSection('perangkat')" class="nav-btn w-full flex items-center p-3 rounded-xl transition hover:bg-indigo-50" id="btn-perangkat">
+                    <i class="fas fa-user-tie mr-3 text-indigo-600"></i> Perangkat & LMD
+                </button>
+                <button onclick="showSection('surat')" class="nav-btn w-full flex items-center p-3 rounded-xl transition hover:bg-indigo-50" id="btn-surat">
+                    <i class="fas fa-file-signature mr-3 text-indigo-600"></i> Persuratan
+                </button>
+                <button onclick="showSection('keuangan')" class="nav-btn w-full flex items-center p-3 rounded-xl transition hover:bg-indigo-50" id="btn-keuangan">
+                    <i class="fas fa-wallet mr-3 text-indigo-600"></i> Lap. Keuangan
+                </button>
+                <button onclick="showSection('kegiatan')" class="nav-btn w-full flex items-center p-3 rounded-xl transition hover:bg-indigo-50" id="btn-kegiatan">
+                    <i class="fas fa-camera mr-3 text-indigo-600"></i> Dokumentasi 2026
+                </button>
+                <div class="pt-10">
+                    <button onclick="handleLogout()" class="w-full flex items-center p-3 rounded-xl text-red-600 hover:bg-red-50 transition">
+                        <i class="fas fa-sign-out-alt mr-3"></i> Keluar
+                    </button>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- CONTENT AREA -->
+        <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+            
+            <!-- HEADER -->
+            <header class="flex justify-between items-center mb-8 no-print">
+                <div>
+                    <h1 id="section-title" class="text-3xl font-bold text-white drop-shadow-md">Dashboard</h1>
+                    <p class="text-indigo-100">Selamat datang di Panel Admin Desa Wiyugobak</p>
+                </div>
+                <div class="hidden md:flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-white font-semibold">Admin Desa</p>
+                        <p class="text-xs text-indigo-200">kobakmamispugu@gmail.com</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=Admin+Wiyugobak&background=4f46e5&color=fff" class="w-12 h-12 rounded-full border-2 border-white shadow-lg">
+                </div>
+            </header>
+
+            <!-- SECTION: DASHBOARD -->
+            <section id="content-dashboard" class="content-section">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-8 border-indigo-600">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-indigo-100 rounded-lg text-indigo-600 mr-4">
+                                <i class="fas fa-users fa-2x"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Total Penduduk</p>
+                                <h3 id="stat-penduduk" class="text-2xl font-bold">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-8 border-blue-400">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-blue-100 rounded-lg text-blue-600 mr-4">
+                                <i class="fas fa-file-alt fa-2x"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Surat Terbit</p>
+                                <h3 class="text-2xl font-bold">128</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border-l-8 border-purple-500">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-purple-100 rounded-lg text-purple-600 mr-4">
+                                <i class="fas fa-calendar-check fa-2x"></i>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 text-sm">Kegiatan 2026</p>
+                                <h3 class="text-2xl font-bold">14</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INFO DESA -->
+                <div class="mt-8 glass-morphism rounded-2xl p-8 shadow-xl">
+                    <h3 class="text-xl font-bold text-indigo-800 mb-4 border-b pb-2">Informasi Kontak & Alamat</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-3">
+                            <div class="flex items-center text-gray-700">
+                                <i class="fas fa-map-marker-alt w-8 text-indigo-600"></i>
+                                <span>Distrik Kobakma, Kab. Mamberamo Tengah, Papua Pegunungan</span>
+                            </div>
+                            <div class="flex items-center text-gray-700">
+                                <i class="fab fa-whatsapp w-8 text-green-500"></i>
+                                <span>+62 821 4247 0302</span>
+                            </div>
+                            <div class="flex items-center text-gray-700">
+                                <i class="fas fa-envelope w-8 text-red-500"></i>
+                                <span>kobakmamispugu@gmail.com</span>
+                            </div>
+                            <div class="flex items-center text-gray-700">
+                                <i class="fas fa-globe w-8 text-blue-500"></i>
+                                <span>https://desawiyugobak.com</span>
+                            </div>
+                        </div>
+                        <div class="bg-indigo-50 p-4 rounded-xl">
+                            <h4 class="font-bold text-indigo-800 mb-2">Visi & Misi</h4>
+                            <p class="text-sm italic text-gray-600">"Mewujudkan Desa Wiyugobak yang mandiri, sejahtera, dan berbasis digital melalui transparansi data penduduk."</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: DATA PENDUDUK -->
+            <section id="content-penduduk" class="content-section hidden">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div class="p-6 bg-indigo-600 flex flex-col md:flex-row justify-between items-center text-white space-y-4 md:space-y-0">
+                        <h3 class="text-xl font-bold"><i class="fas fa-id-card mr-2"></i>Database Warga</h3>
+                        <button onclick="openModal('modal-penduduk')" class="bg-white text-indigo-600 px-4 py-2 rounded-lg font-bold hover:bg-indigo-50 transition">
+                            <i class="fas fa-plus mr-2"></i>Tambah Penduduk
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto p-4">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
+                                <tr>
+                                    <th class="px-4 py-3">Foto</th>
+                                    <th class="px-4 py-3">Nama / NIK</th>
+                                    <th class="px-4 py-3">Agama / Tgl Lahir</th>
+                                    <th class="px-4 py-3">Pekerjaan</th>
+                                    <th class="px-4 py-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="list-penduduk" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: PERANGKAT DESA & LMD -->
+            <section id="content-perangkat" class="content-section hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Perangkat Desa -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="p-4 bg-blue-600 text-white flex justify-between items-center">
+                            <h3 class="font-bold">Perangkat Desa</h3>
+                            <button onclick="openModal('modal-staf', 'perangkat')" class="text-xs bg-white text-blue-600 px-2 py-1 rounded">Tambah</button>
+                        </div>
+                        <div class="p-4 divide-y" id="list-perangkat"></div>
+                    </div>
+                    <!-- LMD -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="p-4 bg-purple-600 text-white flex justify-between items-center">
+                            <h3 class="font-bold">Anggota LMD</h3>
+                            <button onclick="openModal('modal-staf', 'lmd')" class="text-xs bg-white text-purple-600 px-2 py-1 rounded">Tambah</button>
+                        </div>
+                        <div class="p-4 divide-y" id="list-lmd"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: PERSURATAN -->
+            <section id="content-surat" class="content-section hidden">
+                <div class="bg-white p-8 rounded-2xl shadow-lg max-w-2xl mx-auto">
+                    <h3 class="text-2xl font-bold text-center mb-6">Cetak Surat Administrasi Desa</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Jenis Surat</label>
+                            <select id="surat-jenis" class="w-full p-2 border rounded">
+                                <option>Surat Keterangan Usaha</option>
+                                <option>Surat Keterangan Domisili</option>
+                                <option>Surat Keterangan Kurang Mampu</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Pilih Penduduk</label>
+                            <select id="surat-penduduk" class="w-full p-2 border rounded"></select>
+                        </div>
+                        <button onclick="generateSurat()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">
+                            <i class="fas fa-print mr-2"></i>Pratinjau & Cetak
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: KEUANGAN -->
+            <section id="content-keuangan" class="content-section hidden">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">Laporan Penerima Bantuan Keuangan 2026</h3>
+                        <button onclick="openModal('modal-dana')" class="bg-indigo-600 text-white px-4 py-2 rounded text-sm">Tambah Catatan</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-3 text-left">Nama Penerima</th>
+                                    <th class="p-3 text-left">Jenis Dana</th>
+                                    <th class="p-3 text-left">Jumlah (Rp)</th>
+                                    <th class="p-3 text-left">Status</th>
+                                    <th class="p-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="list-keuangan" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: KEGIATAN -->
+            <section id="content-kegiatan" class="content-section hidden">
+                <div class="mb-6 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-white">Album Kegiatan Desa 2026</h3>
+                    <button onclick="openModal('modal-kegiatan')" class="bg-white text-indigo-700 px-4 py-2 rounded-lg font-bold shadow">Unggah Foto/Video</button>
+                </div>
+                <div id="grid-kegiatan" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- AREA CETAK SURAT -->
+    <div id="print-area" class="print-only p-12 text-black bg-white">
+        <div class="text-center border-b-4 border-double border-black pb-4 mb-6">
+            <h1 class="text-xl font-bold uppercase">Pemerintah Kabupaten Mamberamo Tengah</h1>
+            <h2 class="text-lg font-bold uppercase">Distrik Kobakma</h2>
+            <h2 class="text-2xl font-bold uppercase">Kantor Kepala Desa Wiyugobak</h2>
+            <p class="text-sm">Alamat: Desa Wiyugobak, Kode Pos: 99511</p>
+        </div>
+        <div class="my-8">
+            <h3 class="text-center font-bold underline text-lg" id="print-judul-surat">SURAT KETERANGAN</h3>
+            <p class="text-center text-sm">Nomor: 140 / ____ / 2026</p>
+        </div>
+        <div class="space-y-4 leading-relaxed">
+            <p>Yang bertanda tangan di bawah ini Kepala Desa Wiyugobak, Distrik Kobakma, Kabupaten Mamberamo Tengah, menerangkan bahwa:</p>
+            <div class="ml-8 space-y-1">
+                <p>Nama : <span id="print-nama" class="font-bold"></span></p>
+                <p>NIK : <span id="print-nik"></span></p>
+                <p>Tempat/Tgl Lahir : <span id="print-ttl"></span></p>
+                <p>Pekerjaan : <span id="print-pekerjaan"></span></p>
+                <p>Alamat : <span id="print-alamat"></span></p>
+            </div>
+            <p>Bahwa nama tersebut di atas benar-benar penduduk Desa Wiyugobak dan saat ini sedang memerlukan surat ini untuk keperluan administrasi <span class="font-bold underline" id="print-keperluan">Usaha/Domisili</span>.</p>
+            <p>Demikian surat keterangan ini dibuat agar dapat dipergunakan sebagaimana mestinya.</p>
+        </div>
+        <div class="mt-20 flex justify-end">
+            <div class="text-center w-64">
+                <p>Wiyugobak, <span id="print-tanggal"></span></p>
+                <p>Kepala Desa Wiyugobak</p>
+                <div class="h-24"></div>
+                <p class="font-bold underline">( KEPALA DESA )</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: TAMBAH PENDUDUK -->
+    <div id="modal-penduduk" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="p-6 bg-indigo-600 text-white flex justify-between items-center">
+                <h3 class="text-xl font-bold">Formulir Data Penduduk</h3>
+                <button onclick="closeModal('modal-penduduk')" class="text-2xl">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <form id="form-penduduk" onsubmit="savePenduduk(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2 flex flex-col items-center mb-4">
+                        <div class="w-32 h-32 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden relative" id="photo-preview-container">
+                            <img id="photo-preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                            <i id="photo-placeholder" class="fas fa-camera text-gray-400 text-3xl"></i>
+                        </div>
+                        <input type="file" id="p-foto" accept="image/*" class="mt-2 text-xs" onchange="previewImage(this, 'photo-preview')">
+                    </div>
+                    <input type="hidden" id="p-index" value="">
+                    <div><label class="block text-xs font-bold mb-1">Nama Lengkap</label><input type="text" id="p-nama" class="w-full p-2 border rounded" required></div>
+                    <div><label class="block text-xs font-bold mb-1">NIK</label><input type="number" id="p-nik" class="w-full p-2 border rounded" required></div>
+                    <div><label class="block text-xs font-bold mb-1">Tempat Lahir</label><input type="text" id="p-tempat" class="w-full p-2 border rounded"></div>
+                    <div><label class="block text-xs font-bold mb-1">Tgl Lahir</label><input type="date" id="p-tgl" class="w-full p-2 border rounded"></div>
+                    <div><label class="block text-xs font-bold mb-1">Agama</label><select id="p-agama" class="w-full p-2 border rounded"><option>Kristen Protestan</option><option>Katolik</option><option>Islam</option></select></div>
+                    <div><label class="block text-xs font-bold mb-1">No KK</label><input type="number" id="p-kk" class="w-full p-2 border rounded"></div>
+                    <div><label class="block text-xs font-bold mb-1">Pendidikan</label><input type="text" id="p-pendidikan" class="w-full p-2 border rounded"></div>
+                    <div><label class="block text-xs font-bold mb-1">Pekerjaan</label><input type="text" id="p-pekerjaan" class="w-full p-2 border rounded"></div>
+                    <div><label class="block text-xs font-bold mb-1">Status</label><select id="p-status" class="w-full p-2 border rounded"><option>Belum Kawin</option><option>Kawin</option><option>Cerai Hidup</option><option>Cerai Mati</option></select></div>
+                    <div><label class="block text-xs font-bold mb-1">Hubungan</label><input type="text" id="p-hubungan" class="w-full p-2 border rounded"></div>
+                    <div><label class="block text-xs font-bold mb-1">Ayah</label><input type="text" id="p-ayah" class="w-full p-2 border rounded"></div>
+                    <div><label class="block text-xs font-bold mb-1">Ibu</label><input type="text" id="p-ibu" class="w-full p-2 border rounded"></div>
+                    <div class="md:col-span-2"><label class="block text-xs font-bold mb-1">Alamat</label><textarea id="p-alamat" class="w-full p-2 border rounded"></textarea></div>
+                    <div class="md:col-span-2 pt-4"><button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">Simpan Data</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: STAF (PERANGKAT/LMD) -->
+    <div id="modal-staf" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6">
+            <h3 class="text-xl font-bold mb-4" id="staf-modal-title">Input Perangkat / LMD</h3>
+            <form onsubmit="saveStaf(event)" class="space-y-4">
+                <input type="hidden" id="staff-type" value="">
+                <div class="flex justify-center">
+                    <div class="w-24 h-24 bg-gray-100 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center overflow-hidden relative">
+                         <img id="staff-photo-preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                         <i id="staff-photo-placeholder" class="fas fa-user-plus text-gray-400"></i>
+                    </div>
+                </div>
+                <input type="file" accept="image/*" class="text-xs block mx-auto" onchange="previewImage(this, 'staff-photo-preview')">
+                <input type="text" id="staff-nama" placeholder="Nama Lengkap" class="w-full p-2 border rounded" required>
+                <input type="text" id="staff-jabatan" placeholder="Jabatan" class="w-full p-2 border rounded" required>
+                <div class="flex space-x-2">
+                    <button type="button" onclick="closeModal('modal-staf')" class="flex-1 py-2 bg-gray-200 rounded">Batal</button>
+                    <button type="submit" class="flex-1 py-2 bg-blue-600 text-white rounded font-bold">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: KEUANGAN -->
+    <div id="modal-dana" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6">
+            <h3 class="text-xl font-bold mb-4">Catatan Penerima Dana</h3>
+            <form onsubmit="saveKeuangan(event)" class="space-y-4">
+                <input type="text" id="dana-nama" placeholder="Nama Penerima" class="w-full p-2 border rounded" required>
+                <select id="dana-jenis" class="w-full p-2 border rounded">
+                    <option>Bantuan Langsung Tunai (BLT)</option>
+                    <option>Dana Desa Proyek</option>
+                    <option>Insentif Perangkat</option>
+                </select>
+                <input type="number" id="dana-jumlah" placeholder="Jumlah (Rupiah)" class="w-full p-2 border rounded" required>
+                <div class="flex space-x-2">
+                    <button type="button" onclick="closeModal('modal-dana')" class="flex-1 py-2 bg-gray-200 rounded">Batal</button>
+                    <button type="submit" class="flex-1 py-2 bg-indigo-600 text-white rounded font-bold">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: KEGIATAN -->
+    <div id="modal-kegiatan" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6">
+            <h3 class="text-xl font-bold mb-4">Unggah Dokumentasi Kegiatan</h3>
+            <form onsubmit="saveKegiatan(event)" class="space-y-4">
+                <div class="flex justify-center">
+                    <div class="w-full h-40 bg-gray-100 rounded border-2 border-dashed border-gray-400 flex items-center justify-center overflow-hidden relative">
+                         <img id="kegiatan-photo-preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                         <i id="kegiatan-photo-placeholder" class="fas fa-image text-gray-400 text-4xl"></i>
+                    </div>
+                </div>
+                <input type="file" accept="image/*,video/*" class="text-xs block mx-auto" onchange="previewImage(this, 'kegiatan-photo-preview')">
+                <input type="text" id="keg-nama" placeholder="Nama Kegiatan" class="w-full p-2 border rounded" required>
+                <textarea id="keg-desc" placeholder="Keterangan singkat" class="w-full p-2 border rounded"></textarea>
+                <div class="flex space-x-2">
+                    <button type="button" onclick="closeModal('modal-kegiatan')" class="flex-1 py-2 bg-gray-200 rounded">Batal</button>
+                    <button type="submit" class="flex-1 py-2 bg-purple-600 text-white rounded font-bold">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // DATA STATE
+        let penduduk = JSON.parse(localStorage.getItem('desa_penduduk')) || [];
+        let perangkat = JSON.parse(localStorage.getItem('desa_perangkat')) || [{ id: 1, nama: "Mispugu Kobakma", jabatan: "Kepala Desa", foto: "" }];
+        let lmd = JSON.parse(localStorage.getItem('desa_lmd')) || [];
+        let keuangan = JSON.parse(localStorage.getItem('desa_keuangan')) || [];
+        let kegiatan = JSON.parse(localStorage.getItem('desa_kegiatan')) || [];
+
+        // LOGIN SYSTEM
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            if (user === 'admin' && pass === 'admin') {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                initApp();
+            } else { alert('Gagal! admin/admin'); }
+        }
+
+        function handleLogout() {
+            if(confirm("Keluar sistem?")) location.reload();
+        }
+
+        // NAVIGATION
+        function showSection(id) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('content-' + id).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('sidebar-active'));
+            document.getElementById('btn-' + id).classList.add('sidebar-active');
+            document.getElementById('section-title').innerText = id.charAt(0).toUpperCase() + id.slice(1);
+            
+            if(id === 'penduduk') renderPenduduk();
+            if(id === 'perangkat') renderStaf();
+            if(id === 'keuangan') renderKeuangan();
+            if(id === 'kegiatan') renderKegiatan();
+            if(id === 'surat') loadSuratDropdown();
+        }
+
+        function initApp() {
+            showSection('dashboard');
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('stat-penduduk').innerText = penduduk.length;
+        }
+
+        // MODAL HELPERS
+        function openModal(id, type = '') {
+            const modal = document.getElementById(id);
+            if(modal) {
+                modal.classList.remove('hidden');
+                if(type && document.getElementById('staff-type')) {
+                    document.getElementById('staff-type').value = type;
+                    document.getElementById('staf-modal-title').innerText = type === 'perangkat' ? 'Input Perangkat Desa' : 'Input Anggota LMD';
+                }
+            }
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if(modal) modal.classList.add('hidden');
+        }
+
+        function previewImage(input, targetId) {
+            const preview = document.getElementById(targetId);
+            const placeholder = document.getElementById(targetId.replace('preview', 'placeholder'));
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = function () {
+                    preview.src = reader.result;
+                    preview.classList.remove('hidden');
+                    if(placeholder) placeholder.classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // PENDUDUK
+        function renderPenduduk() {
+            const tbody = document.getElementById('list-penduduk');
+            tbody.innerHTML = penduduk.map((p, index) => `
+                <tr class="hover:bg-indigo-50 transition">
+                    <td class="px-4 py-3"><img src="${p.foto || 'https://ui-avatars.com/api/?name='+p.nama}" class="w-10 h-10 rounded-lg object-cover"></td>
+                    <td class="px-4 py-3"><div class="font-bold">${p.nama}</div><div class="text-[10px] text-gray-500">${p.nik}</div></td>
+                    <td class="px-4 py-3"><div class="text-sm">${p.agama}</div><div class="text-xs text-gray-400">${p.tgl}</div></td>
+                    <td class="px-4 py-3 text-sm">${p.pekerjaan}</td>
+                    <td class="px-4 py-3 text-center space-x-2">
+                        <button onclick="editPenduduk(${index})" class="text-blue-500"><i class="fas fa-edit"></i></button>
+                        <button onclick="deletePenduduk(${index})" class="text-red-500"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            updateStats();
+        }
+
+        function savePenduduk(e) {
+            e.preventDefault();
+            const photoEl = document.getElementById('photo-preview');
+            const data = {
+                nama: document.getElementById('p-nama').value,
+                nik: document.getElementById('p-nik').value,
+                tempat: document.getElementById('p-tempat').value,
+                tgl: document.getElementById('p-tgl').value,
+                agama: document.getElementById('p-agama').value,
+                kk: document.getElementById('p-kk').value,
+                pendidikan: document.getElementById('p-pendidikan').value,
+                pekerjaan: document.getElementById('p-pekerjaan').value,
+                status: document.getElementById('p-status').value,
+                hubungan: document.getElementById('p-hubungan').value,
+                ayah: document.getElementById('p-ayah').value,
+                ibu: document.getElementById('p-ibu').value,
+                alamat: document.getElementById('p-alamat').value,
+                foto: photoEl.src.startsWith('data:') ? photoEl.src : ""
+            };
+            const index = document.getElementById('p-index').value;
+            if(index !== "") penduduk[index] = data; else penduduk.push(data);
+            localStorage.setItem('desa_penduduk', JSON.stringify(penduduk));
+            closeModal('modal-penduduk');
+            renderPenduduk();
+            e.target.reset();
+        }
+
+        function deletePenduduk(i) { if(confirm('Hapus?')) { penduduk.splice(i, 1); localStorage.setItem('desa_penduduk', JSON.stringify(penduduk)); renderPenduduk(); }}
+
+        function editPenduduk(i) {
+            const p = penduduk[i];
+            document.getElementById('p-index').value = i;
+            document.getElementById('p-nama').value = p.nama;
+            document.getElementById('p-nik').value = p.nik;
+            if(p.foto) { 
+                document.getElementById('photo-preview').src = p.foto; 
+                document.getElementById('photo-preview').classList.remove('hidden');
+                document.getElementById('photo-placeholder').classList.add('hidden');
+            }
+            openModal('modal-penduduk');
+        }
+
+        // STAF (PERANGKAT/LMD)
+        function renderStaf() {
+            const listP = document.getElementById('list-perangkat');
+            const listL = document.getElementById('list-lmd');
+            listP.innerHTML = perangkat.map((s, i) => `
+                <div class="flex items-center justify-between p-3">
+                    <div class="flex items-center"><img src="${s.foto || 'https://ui-avatars.com/api/?name='+s.nama}" class="w-10 h-10 rounded-full mr-3"><div class="text-sm font-bold">${s.nama}<br><span class="text-xs font-normal text-gray-500">${s.jabatan}</span></div></div>
+                    <button onclick="deleteStaf(${i}, 'perangkat')" class="text-red-400"><i class="fas fa-trash"></i></button>
+                </div>`).join('');
+            listL.innerHTML = lmd.map((s, i) => `
+                <div class="flex items-center justify-between p-3">
+                    <div class="flex items-center"><img src="${s.foto || 'https://ui-avatars.com/api/?name='+s.nama}" class="w-10 h-10 rounded-full mr-3"><div class="text-sm font-bold">${s.nama}<br><span class="text-xs font-normal text-gray-500">${s.jabatan}</span></div></div>
+                    <button onclick="deleteStaf(${i}, 'lmd')" class="text-red-400"><i class="fas fa-trash"></i></button>
+                </div>`).join('');
+        }
+
+        function saveStaf(e) {
+            e.preventDefault();
+            const type = document.getElementById('staff-type').value;
+            const photoEl = document.getElementById('staff-photo-preview');
+            const data = {
+                nama: document.getElementById('staff-nama').value,
+                jabatan: document.getElementById('staff-jabatan').value,
+                foto: photoEl.src.startsWith('data:') ? photoEl.src : ""
+            };
+            if(type === 'perangkat') perangkat.push(data); else lmd.push(data);
+            localStorage.setItem('desa_perangkat', JSON.stringify(perangkat));
+            localStorage.setItem('desa_lmd', JSON.stringify(lmd));
+            closeModal('modal-staf');
+            renderStaf();
+            e.target.reset();
+        }
+
+        function deleteStaf(i, type) { if(confirm('Hapus?')) { if(type==='perangkat') perangkat.splice(i,1); else lmd.splice(i,1); localStorage.setItem('desa_perangkat', JSON.stringify(perangkat)); localStorage.setItem('desa_lmd', JSON.stringify(lmd)); renderStaf(); }}
+
+        // KEUANGAN
+        function renderKeuangan() {
+            const tbody = document.getElementById('list-keuangan');
+            tbody.innerHTML = keuangan.map((k, i) => `
+                <tr>
+                    <td class="p-3 font-bold">${k.nama}</td>
+                    <td class="p-3 text-sm">${k.jenis}</td>
+                    <td class="p-3 font-mono text-green-600">Rp ${Number(k.jumlah).toLocaleString()}</td>
+                    <td class="p-3"><span class="bg-green-100 text-green-700 text-[10px] px-2 py-1 rounded-full font-bold">DANA DESA 2026</span></td>
+                    <td class="p-3 text-center"><button onclick="deleteKeuangan(${i})" class="text-red-500"><i class="fas fa-trash"></i></button></td>
+                </tr>`).join('');
+        }
+
+        function saveKeuangan(e) {
+            e.preventDefault();
+            keuangan.push({
+                nama: document.getElementById('dana-nama').value,
+                jenis: document.getElementById('dana-jenis').value,
+                jumlah: document.getElementById('dana-jumlah').value
+            });
+            localStorage.setItem('desa_keuangan', JSON.stringify(keuangan));
+            closeModal('modal-dana');
+            renderKeuangan();
+            e.target.reset();
+        }
+
+        function deleteKeuangan(i) { if(confirm('Hapus?')) { keuangan.splice(i,1); localStorage.setItem('desa_keuangan', JSON.stringify(keuangan)); renderKeuangan(); }}
+
+        // KEGIATAN
+        function renderKegiatan() {
+            const grid = document.getElementById('grid-kegiatan');
+            grid.innerHTML = kegiatan.map((k, i) => `
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <img src="${k.foto || 'https://via.placeholder.com/400x200?text=No+Image'}" class="w-full h-40 object-cover">
+                    <div class="p-4">
+                        <h4 class="font-bold text-indigo-800">${k.nama}</h4>
+                        <p class="text-xs text-gray-500 mb-4">${k.desc}</p>
+                        <button onclick="deleteKegiatan(${i})" class="text-red-500 text-sm"><i class="fas fa-trash mr-1"></i> Hapus</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function saveKegiatan(e) {
+            e.preventDefault();
+            const photoEl = document.getElementById('kegiatan-photo-preview');
+            kegiatan.push({
+                nama: document.getElementById('keg-nama').value,
+                desc: document.getElementById('keg-desc').value,
+                foto: photoEl.src.startsWith('data:') ? photoEl.src : ""
+            });
+            localStorage.setItem('desa_kegiatan', JSON.stringify(kegiatan));
+            closeModal('modal-kegiatan');
+            renderKegiatan();
+            e.target.reset();
+        }
+
+        function deleteKegiatan(i) { if(confirm('Hapus?')) { kegiatan.splice(i,1); localStorage.setItem('desa_kegiatan', JSON.stringify(kegiatan)); renderKegiatan(); }}
+
+        // SURAT
+        function loadSuratDropdown() {
+            const select = document.getElementById('surat-penduduk');
+            select.innerHTML = penduduk.map(p => `<option value="${p.nik}">${p.nama} (${p.nik})</option>`).join('');
+        }
+
+        function generateSurat() {
+            const nik = document.getElementById('surat-penduduk').value;
+            const p = penduduk.find(x => x.nik === nik);
+            if(!p) return alert("Pilih penduduk dulu!");
+            const jenis = document.getElementById('surat-jenis').value;
+            document.getElementById('print-judul-surat').innerText = jenis.toUpperCase();
+            document.getElementById('print-nama').innerText = p.nama;
+            document.getElementById('print-nik').innerText = p.nik;
+            document.getElementById('print-ttl').innerText = `${p.tempat}, ${p.tgl}`;
+            document.getElementById('print-pekerjaan').innerText = p.pekerjaan;
+            document.getElementById('print-alamat').innerText = p.alamat;
+            document.getElementById('print-keperluan').innerText = jenis;
+            document.getElementById('print-tanggal').innerText = new Date().toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
+            window.print();
+        }
+    </script>
+</body>
+</html>
